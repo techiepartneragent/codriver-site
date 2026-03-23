@@ -92,7 +92,12 @@
     }
 
     /* ─── Main content wrapper ─── */
-    .content-wrap { position: relative; z-index: 2; }
+    .content-wrap { position: relative; z-index: 10 !important; }
+
+    /* ─── Ensure all sections are above canvas ─── */
+    nav { position: relative; z-index: 100 !important; }
+    section { position: relative; z-index: 10; }
+    #hero { position: relative; z-index: 10; }
 
     /* ─── Gradient text ─── */
     .grad-text {
@@ -1071,6 +1076,11 @@
 // ─── 1. Particle Field ───────────────────────────────────────────────────────
 (function() {
   const canvas = document.getElementById('particle-canvas');
+  // Disable particles on mobile to prevent rendering issues
+  if (window.innerWidth < 768) {
+    canvas.style.display = 'none';
+    return;
+  }
   const ctx = canvas.getContext('2d');
   let W, H, particles = [];
   const PARTICLE_COUNT = window.innerWidth < 768 ? 30 : 80;
