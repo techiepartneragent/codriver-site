@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CoDriver — Your Browser. Your AI. In Sync.</title>
+  <meta name="description" content="CoDriver lets AI and humans share the same Chrome session — with you always in control. Approve or block AI actions in real time." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg: '#050510',
+            indigo: { DEFAULT: '#6366f1' },
+            violet: { DEFAULT: '#8b5cf6' },
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #050510;
+      --indigo: #6366f1;
+      --violet: #8b5cf6;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: #e2e8f0;
+      font-family: 'Inter', system-ui, sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ─── Noise texture overlay ─── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.3;
+    }
+
+    /* ─── Gradient orbs ─── */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.12;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .orb-1 { width: 600px; height: 600px; background: var(--indigo); top: -200px; left: -200px; }
+    .orb-2 { width: 500px; height: 500px; background: var(--violet); top: 30%; right: -150px; }
+    .orb-3 { width: 400px; height: 400px; background: #0ea5e9; bottom: 10%; left: 20%; }
+
+    /* ─── Glass card ─── */
+    .glass {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+    }
+
+    /* ─── Gradient text ─── */
+    .grad-text {
+      background: linear-gradient(135deg, #fff 0%, #a5b4fc 40%, #8b5cf6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ─── Glow button ─── */
+    .btn-primary {
+      background: linear-gradient(135deg, var(--indigo), var(--violet));
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      background: linear-gradient(135deg, var(--indigo), var(--violet));
+      border-radius: inherit;
+      filter: blur(12px);
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: -1;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 40px rgba(99,102,241,0.5); }
+    .btn-primary:hover::before { opacity: 1; }
+
+    .btn-secondary {
+      border: 1px solid rgba(99,102,241,0.4);
+      background: rgba(99,102,241,0.06);
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover {
+      border-color: rgba(99,102,241,0.8);
+      background: rgba(99,102,241,0.15);
+      transform: translateY(-2px);
+    }
+
+    /* ─── Scroll reveal ─── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ─── Feature card tilt ─── */
+    .tilt-card {
+      transform-style: preserve-3d;
+      transition: transform 0.1s ease;
+    }
+
+    /* ─── Browser mockup ─── */
+    .browser-mockup {
+      background: #0d0d20;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 40px 120px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.05);
+    }
+    .browser-bar {
+      background: #111128;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .browser-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    /* ─── Step connector ─── */
+    .step-line {
+      width: 2px;
+      height: 60px;
+      background: linear-gradient(to bottom, var(--indigo), transparent);
+      margin: 0 auto;
+    }
+
+    /* ─── Nav blur ─── */
+    nav {
+      background: rgba(5,5,16,0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    /* ─── Code block ─── */
+    .code-block {
+      background: #0a0a1a;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      line-height: 1.7;
+      overflow-x: auto;
+    }
+    .code-comment { color: #4b5563; }
+    .code-cmd { color: #a5b4fc; }
+    .code-arg { color: #86efac; }
+
+    /* ─── Table ─── */
+    .comp-table th { color: #a5b4fc; font-weight: 600; }
+    .comp-table tr:hover td { background: rgba(99,102,241,0.05); }
+
+    /* ─── Animated pulse ring ─── */
+    @keyframes pulse-ring {
+      0% { transform: scale(0.9); opacity: 0.8; }
+      100% { transform: scale(1.4); opacity: 0; }
+    }
+    .pulse-ring {
+      position: absolute;
+      inset: -8px;
+      border-radius: 50%;
+      border: 2px solid var(--indigo);
+      animation: pulse-ring 2s ease-out infinite;
+    }
+
+    /* ─── Floating animation ─── */
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-12px); }
+    }
+    .float { animation: float 4s ease-in-out infinite; }
+
+    /* ─── Typing cursor ─── */
+    @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
+    .cursor { animation: blink 1s step-start infinite; }
+
+    /* ─── Side panel mockup animation ─── */
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .slide-in { animation: slideIn 0.5s ease forwards; }
+
+    @keyframes fadeUp {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .action-item { animation: fadeUp 0.4s ease forwards; }
+
+    /* ─── Gradient border ─── */
+    .grad-border {
+      position: relative;
+    }
+    .grad-border::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(99,102,241,0.5), rgba(139,92,246,0.5));
+      z-index: -1;
+    }
+
+    /* ─── Section badge ─── */
+    .section-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(99,102,241,0.1);
+      border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 100px;
+      padding: 4px 14px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #a5b4fc;
+    }
+
+    /* ─── Hero glow ─── */
+    .hero-glow {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(99,102,241,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ─── Comparison checkmark ─── */
+    .check { color: #34d399; }
+    .cross { color: #f87171; opacity: 0.5; }
+  </style>
+</head>
+<body>
+
+  <!-- Background orbs -->
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+
+  <!-- ═══════════════════ NAV ═══════════════════ -->
+  <nav class="fixed top-0 left-0 right-0 z-50">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="relative w-8 h-8">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-sm font-bold">C</div>
+        </div>
+        <span class="font-bold text-lg tracking-tight">CoDriver</span>
+      </div>
+      <div class="hidden md:flex items-center gap-8 text-sm text-slate-400">
+        <a href="#how-it-works" class="hover:text-white transition-colors">How It Works</a>
+        <a href="#features" class="hover:text-white transition-colors">Features</a>
+        <a href="#compare" class="hover:text-white transition-colors">Compare</a>
+        <a href="#install" class="hover:text-white transition-colors">Install</a>
+      </div>
+      <a href="https://github.com/techiepartneragent/codriver" target="_blank"
+         class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium text-slate-300 flex items-center gap-2">
+        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════ HERO ═══════════════════ -->
+  <section class="relative min-h-screen flex items-center pt-20 overflow-hidden">
+    <div class="hero-glow"></div>
+    <div class="relative z-10 max-w-6xl mx-auto px-6 py-20 w-full">
+      <div class="grid lg:grid-cols-2 gap-16 items-center">
+        
+        <!-- Left: Text -->
+        <div>
+          <div class="section-badge mb-6">
+            <span class="w-2 h-2 rounded-full bg-green-400 inline-block"></span>
+            Chrome Extension + MCP Server
+          </div>
+          <h1 class="text-5xl md:text-6xl lg:text-7xl font-black leading-[1.05] tracking-tight mb-6">
+            <span class="grad-text">Your Browser.<br>Your AI.<br>In Sync.</span>
+          </h1>
+          <p class="text-lg text-slate-400 leading-relaxed mb-10 max-w-lg">
+            CoDriver lets AI and humans share the same Chrome session — with you always in control. Approve or block AI actions in real time from a side panel or Telegram.
+          </p>
+          <div class="flex flex-wrap gap-4">
+            <a href="https://github.com/techiepartneragent/codriver" target="_blank"
+               class="btn-primary px-7 py-3.5 rounded-xl font-semibold text-white flex items-center gap-2 text-sm">
+              ⬇ Download Extension
+            </a>
+            <a href="https://github.com/techiepartneragent/codriver#readme" target="_blank"
+               class="btn-secondary px-7 py-3.5 rounded-xl font-semibold text-slate-300 flex items-center gap-2 text-sm">
+              📖 View Docs
+            </a>
+          </div>
+
+          <!-- Stats -->
+          <div class="flex gap-8 mt-12 pt-8 border-t border-white/5">
+            <div>
+              <div class="text-2xl font-bold text-white">Real</div>
+              <div class="text-xs text-slate-500 mt-0.5">Chrome Profile</div>
+            </div>
+            <div>
+              <div class="text-2xl font-bold text-white">0ms</div>
+              <div class="text-xs text-slate-500 mt-0.5">Setup Latency</div>
+            </div>
+            <div>
+              <div class="text-2xl font-bold text-white">MCP</div>
+              <div class="text-xs text-slate-500 mt-0.5">Claude Native</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Browser Mockup -->
+        <div class="float hidden lg:block">
+          <div class="browser-mockup max-w-lg ml-auto">
+            <div class="browser-bar">
+              <div class="browser-dot bg-red-400"></div>
+              <div class="browser-dot bg-yellow-400"></div>
+              <div class="browser-dot bg-green-400"></div>
+              <div class="flex-1 ml-3">
+                <div class="bg-white/5 rounded-md px-3 py-1 text-xs text-slate-500 font-mono">chrome://newtab</div>
+              </div>
+            </div>
+            <div class="flex" style="height: 340px;">
+              <!-- Main browser content -->
+              <div class="flex-1 p-4 text-xs" style="background: #0a0a1e;">
+                <!-- Simulated page content -->
+                <div class="mb-3 flex items-center gap-2">
+                  <div class="w-6 h-6 rounded bg-indigo-500/20 flex items-center justify-center text-indigo-400 text-xs">AI</div>
+                  <div class="text-slate-400 font-mono text-xs">Claude is browsing...</div>
+                  <div class="w-2 h-2 rounded-full bg-green-400 ml-auto animate-pulse"></div>
+                </div>
+                <div class="space-y-2 mb-4">
+                  <div class="h-2 bg-white/5 rounded w-4/5"></div>
+                  <div class="h-2 bg-white/5 rounded w-3/5"></div>
+                  <div class="h-2 bg-white/5 rounded w-5/6"></div>
+                  <div class="h-2 bg-white/5 rounded w-2/4"></div>
+                </div>
+                <!-- Action toast -->
+                <div class="glass rounded-lg p-3 border-l-2 border-indigo-500 mb-3">
+                  <div class="text-indigo-400 text-xs font-semibold mb-1">🤖 AI Action Pending</div>
+                  <div class="text-slate-400 text-xs font-mono">click("Submit button")</div>
+                </div>
+                <div class="flex gap-2">
+                  <div class="px-3 py-1.5 bg-green-500/20 border border-green-500/30 rounded text-green-400 text-xs font-semibold cursor-pointer hover:bg-green-500/30 transition-colors">✅ Approve</div>
+                  <div class="px-3 py-1.5 bg-red-500/20 border border-red-500/30 rounded text-red-400 text-xs font-semibold cursor-pointer hover:bg-red-500/30 transition-colors">🛑 Block</div>
+                </div>
+              </div>
+              <!-- Side panel -->
+              <div class="w-44 border-l border-white/5 p-3 slide-in" style="background: #080818;">
+                <div class="text-xs font-bold text-slate-300 mb-3 flex items-center gap-1.5">
+                  <span class="w-4 h-4 rounded bg-indigo-500/20 flex items-center justify-center">C</span>
+                  CoDriver
+                </div>
+                <div class="space-y-2">
+                  <div class="action-item glass rounded-md p-2 text-xs" style="animation-delay: 0.2s;">
+                    <div class="text-green-400 text-xs mb-0.5">✅ Approved</div>
+                    <div class="text-slate-500 font-mono text-xs truncate">navigate(github)</div>
+                  </div>
+                  <div class="action-item glass rounded-md p-2 text-xs" style="animation-delay: 0.4s;">
+                    <div class="text-green-400 text-xs mb-0.5">✅ Approved</div>
+                    <div class="text-slate-500 font-mono text-xs truncate">click("Login")</div>
+                  </div>
+                  <div class="action-item glass rounded-md p-2 border border-indigo-500/40 text-xs" style="animation-delay: 0.6s;">
+                    <div class="text-yellow-400 text-xs mb-0.5">⏳ Waiting</div>
+                    <div class="text-slate-500 font-mono text-xs truncate">click("Submit")</div>
+                  </div>
+                </div>
+                <div class="mt-3 pt-2 border-t border-white/5">
+                  <div class="text-xs text-slate-600">Alt+A approve</div>
+                  <div class="text-xs text-slate-600">Alt+X block</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ HOW IT WORKS ═══════════════════ -->
+  <section id="how-it-works" class="relative py-28 z-10">
+    <div class="max-w-4xl mx-auto px-6">
+      <div class="text-center mb-16 reveal">
+        <div class="section-badge mb-4">How It Works</div>
+        <h2 class="text-4xl md:text-5xl font-black tracking-tight mb-4">
+          Up and running in <span class="grad-text">3 steps</span>
+        </h2>
+        <p class="text-slate-400 text-lg">No cloud. No new browser. Just your Chrome, your AI, and your rules.</p>
+      </div>
+
+      <div class="relative">
+        <!-- Steps -->
+        <div class="space-y-6">
+          <!-- Step 1 -->
+          <div class="reveal flex gap-6 items-start glass rounded-2xl p-6">
+            <div class="relative flex-shrink-0">
+              <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500/20 to-indigo-500/5 border border-indigo-500/30 flex items-center justify-center text-2xl">🔧</div>
+            </div>
+            <div>
+              <div class="text-xs text-indigo-400 font-semibold mb-1 uppercase tracking-widest">Step 01</div>
+              <h3 class="text-xl font-bold mb-2">Install the Chrome Extension + MCP Server</h3>
+              <p class="text-slate-400 text-sm leading-relaxed">Clone the repo, run the local MCP server, and load the unpacked extension. No accounts, no cloud — everything runs locally on your machine.</p>
+            </div>
+          </div>
+
+          <!-- Connector -->
+          <div class="step-line reveal"></div>
+
+          <!-- Step 2 -->
+          <div class="reveal flex gap-6 items-start glass rounded-2xl p-6">
+            <div class="relative flex-shrink-0">
+              <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-violet-500/20 to-violet-500/5 border border-violet-500/30 flex items-center justify-center text-2xl">🤖</div>
+            </div>
+            <div>
+              <div class="text-xs text-violet-400 font-semibold mb-1 uppercase tracking-widest">Step 02</div>
+              <h3 class="text-xl font-bold mb-2">Claude / AI takes actions in your real browser</h3>
+              <p class="text-slate-400 text-sm leading-relaxed">Connect Claude Desktop (or any MCP-compatible AI) to CoDriver's MCP server. The AI sees your real Chrome tabs and can navigate, click, type, and interact — all in your existing session with your cookies and logins.</p>
+            </div>
+          </div>
+
+          <!-- Connector -->
+          <div class="step-line reveal" style="background: linear-gradient(to bottom, #8b5cf6, transparent);"></div>
+
+          <!-- Step 3 -->
+          <div class="reveal flex gap-6 items-start glass rounded-2xl p-6">
+            <div class="relative flex-shrink-0">
+              <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500/20 to-green-500/5 border border-green-500/30 flex items-center justify-center text-2xl">✅</div>
+            </div>
+            <div>
+              <div class="text-xs text-green-400 font-semibold mb-1 uppercase tracking-widest">Step 03</div>
+              <h3 class="text-xl font-bold mb-2">You approve, block, or let it run</h3>
+              <p class="text-slate-400 text-sm leading-relaxed">Every AI action pauses for your approval (or auto-runs if you trust it). Use the side panel, keyboard shortcuts (Alt+A / Alt+X), or Telegram on your phone. You're always in the driver's seat.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ FEATURES ═══════════════════ -->
+  <section id="features" class="relative py-28 z-10">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="text-center mb-16 reveal">
+        <div class="section-badge mb-4">Features</div>
+        <h2 class="text-4xl md:text-5xl font-black tracking-tight mb-4">
+          Everything you need to <span class="grad-text">co-pilot</span>
+        </h2>
+        <p class="text-slate-400 text-lg">Built for humans who want AI power without losing control.</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+        
+        <!-- Card 1 -->
+        <div class="reveal tilt-card glass rounded-2xl p-6 cursor-default">
+          <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-2xl mb-4">🔐</div>
+          <h3 class="text-lg font-bold mb-2">Real Chrome Profile</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">No new browser. No fresh session. AI uses YOUR logged-in Chrome — with all your cookies, saved passwords, and extensions intact.</p>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="reveal tilt-card glass rounded-2xl p-6 cursor-default" style="transition-delay: 0.1s;">
+          <div class="w-12 h-12 rounded-xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center text-2xl mb-4">✅</div>
+          <h3 class="text-lg font-bold mb-2">Approve / Block UI</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">Every AI action goes through you first. See exactly what the AI wants to do — click, type, navigate — and approve or block with one key.</p>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="reveal tilt-card glass rounded-2xl p-6 cursor-default" style="transition-delay: 0.2s;">
+          <div class="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-2xl mb-4">🛑</div>
+          <h3 class="text-lg font-bold mb-2">CAPTCHA Handoff</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">AI hits a CAPTCHA? It pauses automatically, you solve it, and the AI resumes right where it left off. Zero friction.</p>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="reveal tilt-card glass rounded-2xl p-6 cursor-default" style="transition-delay: 0.3s;">
+          <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-2xl mb-4">📱</div>
+          <h3 class="text-lg font-bold mb-2">Telegram Alerts</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">Away from your desk? Approve AI actions from your phone via Telegram. Never miss a step or block a mistake from anywhere.</p>
+        </div>
+
+        <!-- Card 5 -->
+        <div class="reveal tilt-card glass rounded-2xl p-6 cursor-default" style="transition-delay: 0.4s;">
+          <div class="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-2xl mb-4">🗂️</div>
+          <h3 class="text-lg font-bold mb-2">Multi-Tab Control</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">AI works seamlessly across all your open tabs. Switch context, jump between pages, and manage complex multi-step tasks.</p>
+        </div>
+
+        <!-- Card 6 -->
+        <div class="reveal tilt-card glass rounded-2xl p-6 cursor-default" style="transition-delay: 0.5s;">
+          <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-2xl mb-4">⌨️</div>
+          <h3 class="text-lg font-bold mb-2">Keyboard Shortcuts</h3>
+          <p class="text-slate-400 text-sm leading-relaxed">
+            <span class="font-mono text-xs bg-white/5 px-1.5 py-0.5 rounded border border-white/10">Alt+A</span> approve · 
+            <span class="font-mono text-xs bg-white/5 px-1.5 py-0.5 rounded border border-white/10">Alt+X</span> block · 
+            <span class="font-mono text-xs bg-white/5 px-1.5 py-0.5 rounded border border-white/10">Alt+C</span> panel. Lightning-fast control without leaving the keyboard.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ COMPARISON ═══════════════════ -->
+  <section id="compare" class="relative py-28 z-10">
+    <div class="max-w-5xl mx-auto px-6">
+      <div class="text-center mb-16 reveal">
+        <div class="section-badge mb-4">Why CoDriver</div>
+        <h2 class="text-4xl md:text-5xl font-black tracking-tight mb-4">
+          The only AI browser tool <span class="grad-text">built for humans</span>
+        </h2>
+        <p class="text-slate-400 text-lg">See how CoDriver stacks up against other browser automation tools.</p>
+      </div>
+
+      <div class="reveal glass rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="comp-table w-full text-sm">
+            <thead>
+              <tr class="border-b border-white/5">
+                <th class="text-left px-6 py-4 text-slate-300 font-semibold">Feature</th>
+                <th class="px-6 py-4 text-center">
+                  <div class="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/30 rounded-lg px-3 py-1.5">
+                    <span class="text-indigo-300 font-bold">CoDriver</span>
+                    <span class="text-green-400 text-xs">★ Best</span>
+                  </div>
+                </th>
+                <th class="px-6 py-4 text-center text-slate-500 font-medium">Browserbase</th>
+                <th class="px-6 py-4 text-center text-slate-500 font-medium">Playwright MCP</th>
+                <th class="px-6 py-4 text-center text-slate-500 font-medium">BrowserMCP</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              <tr>
+                <td class="px-6 py-4 text-slate-300">Real Chrome profile</td>
+                <td class="px-6 py-4 text-center text-xl check">✅</td>
+                <td class="px-6 py-4 text-center text-xl cross">❌</td>
+                <td class="px-6 py-4 text-center text-xl cross">❌</td>
+                <td class="px-6 py-4 text-center text-xl check">✅</td>
+              </tr>
+              <tr>
+                <td class="px-6 py-4 text-slate-300">Human approve / block</td>
+                <td class="px-6 py-4 text-center text-xl check">✅</td>
+                <td class="px-6 py-4 text-center text-xl cross">❌</td>
+                <td class="px-6 py-4 text-center text-xl cross">❌</td>
+                <td class="px-6 py-4 text-center text-xl cross">❌</td>
+              </tr>
+              <tr>
+                <td class="px-6 py-4 text-slate-300">CAPTCHA handoff</td>
+                <td class="px-6 py-4 text-center text-xl check">✅</td>
+                <td class="px-6 py-4 text-center text-xl cross">❌</td>
+                <td class="px-6 py-4 text-center text-xl cross">❌</td>
+                <td class="px-6 py-4 text-center text-xl cross">❌</td>
+              </tr>
+              <tr>
+                <td class="px-6 py-4 text-slate-300">Telegram alerts</td>
+                <td class="px-6 py-4 text-center text-xl check">✅</td>
+                <td class="px-6 py-4 text-center text-xl cross">❌</td>
+                <td class="px-6 py-4 text-center text-xl cross">❌</td>
+                <td class="px-6 py-4 text-center text-xl cross">❌</td>
+              </tr>
+              <tr>
+                <td class="px-6 py-4 text-slate-300">No API key needed</td>
+                <td class="px-6 py-4 text-center text-xl check">✅</td>
+                <td class="px-6 py-4 text-center text-xl cross">❌</td>
+                <td class="px-6 py-4 text-center text-xl check">✅</td>
+                <td class="px-6 py-4 text-center text-xl check">✅</td>
+              </tr>
+              <tr>
+                <td class="px-6 py-4 text-slate-300">MCP (Claude) native</td>
+                <td class="px-6 py-4 text-center text-xl check">✅</td>
+                <td class="px-6 py-4 text-center text-xl check">✅</td>
+                <td class="px-6 py-4 text-center text-xl check">✅</td>
+                <td class="px-6 py-4 text-center text-xl check">✅</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ INSTALL ═══════════════════ -->
+  <section id="install" class="relative py-28 z-10">
+    <div class="max-w-4xl mx-auto px-6">
+      <div class="text-center mb-16 reveal">
+        <div class="section-badge mb-4">Install</div>
+        <h2 class="text-4xl md:text-5xl font-black tracking-tight mb-4">
+          Start in <span class="grad-text">3 commands</span>
+        </h2>
+        <p class="text-slate-400 text-lg">No Docker. No cloud. No sign-up. Just clone and run.</p>
+      </div>
+
+      <div class="reveal">
+        <div class="code-block p-6 relative">
+          <div class="flex items-center gap-2 mb-5 pb-4 border-b border-white/5">
+            <div class="w-3 h-3 rounded-full bg-red-400/60"></div>
+            <div class="w-3 h-3 rounded-full bg-yellow-400/60"></div>
+            <div class="w-3 h-3 rounded-full bg-green-400/60"></div>
+            <span class="ml-2 text-slate-600 text-xs">Terminal</span>
+            <button onclick="copyCode()" class="ml-auto text-xs text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1" id="copy-btn">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+              Copy
+            </button>
+          </div>
+          <pre id="code-content"><span class="code-comment"># 1. Clone the repo</span>
+<span class="code-cmd">git</span> <span class="code-arg">clone</span> https://github.com/techiepartneragent/codriver
+
+<span class="code-comment"># 2. Start MCP server</span>
+<span class="code-cmd">cd</span> codriver/mcp-server <span class="code-arg">&amp;&amp;</span> <span class="code-cmd">npm</span> install <span class="code-arg">&amp;&amp;</span> <span class="code-cmd">node</span> server.js
+
+<span class="code-comment"># 3. Load extension in Chrome</span>
+<span class="code-comment"># chrome://extensions → Load Unpacked → /codriver/extension/</span></pre>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="text-center mt-12 reveal">
+        <a href="https://github.com/techiepartneragent/codriver" target="_blank"
+           class="btn-primary inline-flex items-center gap-3 px-8 py-4 rounded-xl font-semibold text-white text-base">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+          View on GitHub →
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ FOOTER ═══════════════════ -->
+  <footer class="relative z-10 border-t border-white/5 py-12">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-sm font-bold">C</div>
+          <div>
+            <div class="font-bold text-white">CoDriver</div>
+            <div class="text-xs text-slate-600">Built by <a href="https://techiepartner.com" class="text-slate-500 hover:text-indigo-400 transition-colors">Techiepartner</a></div>
+          </div>
+        </div>
+        <div class="flex items-center gap-6 text-sm text-slate-500">
+          <a href="https://github.com/techiepartneragent/codriver" target="_blank" class="hover:text-white transition-colors flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+            GitHub
+          </a>
+          <a href="https://github.com/techiepartneragent/codriver#readme" target="_blank" class="hover:text-white transition-colors">Docs</a>
+          <a href="mailto:hello@techiepartner.com" class="hover:text-white transition-colors">Contact</a>
+        </div>
+      </div>
+      <div class="text-center text-xs text-slate-700 mt-8">
+        © 2025 Techiepartner. Open source under MIT License.
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ─── Scroll reveal ───
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // ─── 3D tilt on feature cards ───
+    document.querySelectorAll('.tilt-card').forEach(card => {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const cx = rect.width / 2;
+        const cy = rect.height / 2;
+        const rotateX = ((y - cy) / cy) * -8;
+        const rotateY = ((x - cx) / cx) * 8;
+        card.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(8px)`;
+        card.style.boxShadow = `${-rotateY * 2}px ${rotateX * 2}px 40px rgba(99,102,241,0.15)`;
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = 'perspective(800px) rotateX(0) rotateY(0) translateZ(0)';
+        card.style.boxShadow = '';
+        card.style.transition = 'transform 0.5s ease, box-shadow 0.5s ease';
+        setTimeout(() => { card.style.transition = ''; }, 500);
+      });
+    });
+
+    // ─── Copy code ───
+    function copyCode() {
+      const code = `# 1. Clone the repo
+git clone https://github.com/techiepartneragent/codriver
+
+# 2. Start MCP server
+cd codriver/mcp-server && npm install && node server.js
+
+# 3. Load extension in Chrome
+# chrome://extensions → Load Unpacked → /codriver/extension/`;
+      navigator.clipboard.writeText(code).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg> Copied!`;
+        btn.classList.add('text-green-400');
+        setTimeout(() => {
+          btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg> Copy`;
+          btn.classList.remove('text-green-400');
+        }, 2000);
+      });
+    }
+
+    // ─── Smooth staggered reveal ───
+    document.querySelectorAll('.reveal').forEach((el, i) => {
+      if (!el.style.transitionDelay) {
+        el.style.transitionDelay = `${i * 0.05}s`;
+      }
+    });
+  </script>
+</body>
+</html>
