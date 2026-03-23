@@ -351,6 +351,24 @@
       .nav-links { display: none; }
       .hero-headline { font-size: clamp(2rem, 10vw, 3.5rem); }
     }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.85); }
+    }
+    @keyframes scrollBounce {
+      0%, 100% { transform: translateY(0); opacity: 1; }
+      60% { transform: translateY(8px); opacity: 0.4; }
+    }
+    @keyframes showcaseFloat {
+      0%, 100% { transform: perspective(1200px) rotateY(0deg) rotateX(3deg) translateY(0px); }
+      50% { transform: perspective(1200px) rotateY(6deg) rotateX(-2deg) translateY(-10px); }
+    }
+    #showcaseMockup {
+      animation: showcaseFloat 5s ease-in-out infinite;
+    }
+    #showcaseMockup.scroll-driven {
+      animation: none;
+    }
   </style>
 </head>
 <body>
@@ -563,6 +581,171 @@
         <div class="w-12 h-12 rounded-full mx-auto mb-4 flex items-center justify-center text-lg font-bold" style="background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.3);color:var(--purple);">3</div>
         <h3 class="font-bold mb-2">Approve & Go</h3>
         <p style="color:rgba(255,255,255,0.4);font-size:0.9rem;">AI takes action, you approve or block each step in real time. Full control, always.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════ 3D SCROLL SHOWCASE ══════════════════════ -->
+<section id="showcase" style="height:300vh;position:relative;">
+  <!-- Progress bar -->
+  <div id="showcaseProgress" style="position:sticky;top:0;left:0;width:4px;height:100vh;z-index:20;pointer-events:none;">
+    <div id="showcaseProgressBar" style="width:100%;height:0%;background:linear-gradient(to bottom,#a855f7,#7c3aed);border-radius:2px;transition:height 0.05s linear;box-shadow:0 0 8px rgba(168,85,247,0.6);"></div>
+  </div>
+
+  <div style="position:sticky;top:0;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;margin-top:-100vh;">
+    <!-- Section header -->
+    <div style="text-align:center;margin-bottom:2.5rem;z-index:10;">
+      <div class="section-label" style="margin-bottom:0.5rem;">Interactive Demo</div>
+      <h2 class="text-4xl md:text-5xl font-bold grad-text">See CoDriver in action</h2>
+      <p style="color:rgba(255,255,255,0.4);margin-top:0.75rem;font-size:0.95rem;">Scroll to explore the flow</p>
+    </div>
+
+    <!-- 3D Mockup container -->
+    <div id="showcaseMockupWrap" style="perspective:1200px;perspective-origin:center center;position:relative;z-index:10;">
+      <div id="showcaseMockup" style="width:min(520px,90vw);transform-style:preserve-3d;transition:transform 0.05s linear;will-change:transform;">
+
+        <!-- STAGE 0: Connected -->
+        <div class="showcase-stage" id="stage0" style="opacity:1;transition:opacity 0.4s ease;position:relative;">
+          <div style="background:#1a1a2e;border-radius:12px;border:1px solid rgba(168,85,247,0.35);overflow:hidden;box-shadow:0 0 60px rgba(168,85,247,0.2),0 20px 60px rgba(0,0,0,0.6);">
+            <!-- Browser chrome -->
+            <div style="background:#111124;padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(255,255,255,0.07);">
+              <div style="width:10px;height:10px;border-radius:50%;background:#ff5f57;"></div>
+              <div style="width:10px;height:10px;border-radius:50%;background:#febc2e;"></div>
+              <div style="width:10px;height:10px;border-radius:50%;background:#28c840;"></div>
+              <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:6px;padding:4px 12px;font-size:11px;color:rgba(255,255,255,0.35);margin:0 8px;">google.com</div>
+              <div style="width:20px;height:20px;background:linear-gradient(135deg,#a855f7,#7c3aed);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;">🤖</div>
+            </div>
+            <!-- Page content + side panel -->
+            <div style="display:flex;height:280px;">
+              <!-- Fake webpage -->
+              <div style="flex:1;padding:20px;overflow:hidden;background:linear-gradient(180deg,#0f0f1a,#0a0a14);">
+                <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:12px;margin-bottom:10px;">
+                  <div style="height:8px;background:rgba(255,255,255,0.12);border-radius:4px;width:70%;margin-bottom:6px;"></div>
+                  <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:4px;width:100%;margin-bottom:4px;"></div>
+                  <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:4px;width:85%;"></div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                  <div style="background:rgba(255,255,255,0.04);border-radius:6px;height:60px;"></div>
+                  <div style="background:rgba(255,255,255,0.04);border-radius:6px;height:60px;"></div>
+                </div>
+                <div style="margin-top:10px;background:rgba(255,255,255,0.03);border-radius:6px;height:80px;"></div>
+              </div>
+              <!-- CoDriver side panel -->
+              <div style="width:160px;border-left:1px solid rgba(168,85,247,0.2);background:rgba(10,10,20,0.95);padding:12px;display:flex;flex-direction:column;gap:8px;">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                  <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 6px #22c55e;"></div>
+                  <span style="font-size:10px;color:rgba(255,255,255,0.7);font-weight:600;">CoDriver</span>
+                </div>
+                <div style="font-size:9px;color:rgba(255,255,255,0.35);">Status: Connected</div>
+                <div style="background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.25);border-radius:6px;padding:8px;">
+                  <div style="font-size:9px;color:#a855f7;font-weight:600;margin-bottom:4px;">🔌 Extension ready</div>
+                  <div style="font-size:8px;color:rgba(255,255,255,0.4);">Awaiting AI commands</div>
+                </div>
+                <div style="font-size:8px;color:rgba(255,255,255,0.25);border-top:1px solid rgba(255,255,255,0.06);padding-top:6px;">Action log</div>
+                <div style="font-size:8px;color:rgba(255,255,255,0.35);">— No actions yet —</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STAGE 1: Pending action (hidden initially) -->
+        <div class="showcase-stage" id="stage1" style="opacity:0;transition:opacity 0.4s ease;position:absolute;top:0;left:0;width:100%;">
+          <div style="background:#1a1a2e;border-radius:12px;border:1px solid rgba(168,85,247,0.5);overflow:hidden;box-shadow:0 0 80px rgba(168,85,247,0.3),0 20px 60px rgba(0,0,0,0.6);">
+            <div style="background:#111124;padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(255,255,255,0.07);">
+              <div style="width:10px;height:10px;border-radius:50%;background:#ff5f57;"></div>
+              <div style="width:10px;height:10px;border-radius:50%;background:#febc2e;"></div>
+              <div style="width:10px;height:10px;border-radius:50%;background:#28c840;"></div>
+              <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:6px;padding:4px 12px;font-size:11px;color:rgba(255,255,255,0.35);margin:0 8px;">google.com</div>
+              <div style="width:20px;height:20px;background:linear-gradient(135deg,#a855f7,#7c3aed);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;">🤖</div>
+            </div>
+            <div style="display:flex;height:280px;">
+              <div style="flex:1;padding:20px;overflow:hidden;background:linear-gradient(180deg,#0f0f1a,#0a0a14);position:relative;">
+                <div style="position:absolute;inset:0;background:rgba(168,85,247,0.05);"></div>
+                <div style="background:rgba(255,255,255,0.04);border-radius:8px;padding:12px;margin-bottom:10px;position:relative;">
+                  <div style="height:8px;background:rgba(255,255,255,0.12);border-radius:4px;width:70%;margin-bottom:6px;"></div>
+                  <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:4px;width:100%;margin-bottom:4px;"></div>
+                </div>
+                <!-- AI cursor indicator -->
+                <div style="position:absolute;bottom:30px;left:40px;width:14px;height:14px;border-radius:50%;background:rgba(168,85,247,0.8);box-shadow:0 0 12px rgba(168,85,247,0.9);animation:pulse 1.5s infinite;"></div>
+              </div>
+              <div style="width:160px;border-left:1px solid rgba(168,85,247,0.3);background:rgba(10,10,20,0.95);padding:12px;display:flex;flex-direction:column;gap:8px;">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                  <div style="width:8px;height:8px;border-radius:50%;background:#f59e0b;box-shadow:0 0 6px #f59e0b;animation:pulse 1s infinite;"></div>
+                  <span style="font-size:10px;color:rgba(255,255,255,0.7);font-weight:600;">CoDriver</span>
+                </div>
+                <div style="font-size:9px;color:rgba(255,255,255,0.35);">Action pending</div>
+                <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.4);border-radius:6px;padding:8px;">
+                  <div style="font-size:9px;color:#f59e0b;font-weight:600;margin-bottom:4px;">⚡ AI Action</div>
+                  <div style="font-size:8px;color:rgba(255,255,255,0.6);margin-bottom:8px;">Navigate to google.com</div>
+                  <div style="display:flex;gap:4px;">
+                    <button style="flex:1;background:#22c55e;border:none;border-radius:4px;padding:4px;font-size:8px;color:white;font-weight:600;cursor:pointer;">Approve</button>
+                    <button style="flex:1;background:#ef4444;border:none;border-radius:4px;padding:4px;font-size:8px;color:white;font-weight:600;cursor:pointer;">Block</button>
+                  </div>
+                </div>
+                <div style="font-size:8px;color:rgba(255,255,255,0.25);border-top:1px solid rgba(255,255,255,0.06);padding-top:6px;">Action log</div>
+                <div style="font-size:8px;color:rgba(255,255,255,0.4);">✓ Tab opened</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STAGE 2: CAPTCHA detected (hidden initially) -->
+        <div class="showcase-stage" id="stage2" style="opacity:0;transition:opacity 0.4s ease;position:absolute;top:0;left:0;width:100%;">
+          <div style="background:#1a1a2e;border-radius:12px;border:1px solid rgba(239,68,68,0.4);overflow:hidden;box-shadow:0 0 80px rgba(239,68,68,0.2),0 20px 60px rgba(0,0,0,0.6);">
+            <div style="background:#111124;padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(255,255,255,0.07);">
+              <div style="width:10px;height:10px;border-radius:50%;background:#ff5f57;"></div>
+              <div style="width:10px;height:10px;border-radius:50%;background:#febc2e;"></div>
+              <div style="width:10px;height:10px;border-radius:50%;background:#28c840;"></div>
+              <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:6px;padding:4px 12px;font-size:11px;color:rgba(255,255,255,0.35);margin:0 8px;">accounts.google.com</div>
+              <div style="width:20px;height:20px;background:linear-gradient(135deg,#a855f7,#7c3aed);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;">🤖</div>
+            </div>
+            <div style="display:flex;height:280px;">
+              <div style="flex:1;padding:20px;overflow:hidden;background:linear-gradient(180deg,#0f0f1a,#0a0a14);display:flex;align-items:center;justify-content:center;">
+                <!-- CAPTCHA mockup -->
+                <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:16px;text-align:center;width:140px;">
+                  <div style="font-size:18px;margin-bottom:8px;">🛑</div>
+                  <div style="font-size:9px;color:rgba(255,255,255,0.6);font-weight:600;margin-bottom:4px;">Verify you're human</div>
+                  <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:4px;height:40px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;">
+                    <span style="font-size:8px;color:rgba(255,255,255,0.3);">reCAPTCHA</span>
+                  </div>
+                  <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;width:80%;margin:0 auto;"></div>
+                </div>
+              </div>
+              <div style="width:160px;border-left:1px solid rgba(239,68,68,0.3);background:rgba(10,10,20,0.95);padding:12px;display:flex;flex-direction:column;gap:8px;">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                  <div style="width:8px;height:8px;border-radius:50%;background:#ef4444;box-shadow:0 0 6px #ef4444;"></div>
+                  <span style="font-size:10px;color:rgba(255,255,255,0.7);font-weight:600;">CoDriver</span>
+                </div>
+                <div style="font-size:9px;color:rgba(255,255,255,0.35);">Paused</div>
+                <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.4);border-radius:6px;padding:8px;">
+                  <div style="font-size:9px;color:#ef4444;font-weight:600;margin-bottom:4px;">🛑 CAPTCHA detected</div>
+                  <div style="font-size:8px;color:rgba(255,255,255,0.5);margin-bottom:6px;">AI is waiting for you to solve this</div>
+                  <div style="background:rgba(255,255,255,0.05);border-radius:4px;padding:4px;font-size:8px;color:rgba(255,255,255,0.4);">You're in control</div>
+                </div>
+                <div style="font-size:8px;color:rgba(255,255,255,0.25);border-top:1px solid rgba(255,255,255,0.06);padding-top:6px;">Action log</div>
+                <div style="font-size:8px;color:rgba(255,255,255,0.4);">✓ Tab opened</div>
+                <div style="font-size:8px;color:rgba(255,255,255,0.4);">✓ Navigated</div>
+                <div style="font-size:8px;color:#ef4444;">⚠ CAPTCHA</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- end mockup -->
+    </div><!-- end perspective wrap -->
+
+    <!-- Label -->
+    <div id="showcaseLabel" style="margin-top:2rem;text-align:center;z-index:10;min-height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+      <div id="showcaseLabelText" style="font-size:clamp(1.1rem,2.5vw,1.5rem);font-weight:700;color:#fff;transition:opacity 0.4s ease,transform 0.4s ease;"></div>
+      <div id="showcaseLabelSub" style="font-size:0.875rem;color:#a855f7;margin-top:0.4rem;transition:opacity 0.4s ease;"></div>
+    </div>
+
+    <!-- Scroll hint (visible before scrolling starts) -->
+    <div id="showcaseScrollHint" style="position:absolute;bottom:5%;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;opacity:1;transition:opacity 0.5s ease;z-index:10;">
+      <span style="font-size:0.75rem;color:rgba(255,255,255,0.35);letter-spacing:0.1em;text-transform:uppercase;">Scroll to explore</span>
+      <div style="width:20px;height:32px;border:1.5px solid rgba(255,255,255,0.2);border-radius:10px;display:flex;justify-content:center;padding-top:6px;">
+        <div style="width:3px;height:6px;background:rgba(168,85,247,0.7);border-radius:2px;animation:scrollBounce 1.5s infinite;"></div>
       </div>
     </div>
   </div>
@@ -940,8 +1123,76 @@ document.querySelectorAll('.feat-card').forEach(card => {
     });
   }, { threshold: 0.3 });
 
-  const installSection = document.getElementById('install');
-  if (installSection) obs.observe(installSection);
+// ─── 5. Scroll Showcase ───────────────────────────────────────────────────────
+(function() {
+  const section = document.getElementById('showcase');
+  const mockup = document.getElementById('showcaseMockup');
+  const stages = [
+    document.getElementById('stage0'),
+    document.getElementById('stage1'),
+    document.getElementById('stage2'),
+  ];
+  const labelText = document.getElementById('showcaseLabelText');
+  const labelSub = document.getElementById('showcaseLabelSub');
+  const progressBar = document.getElementById('showcaseProgressBar');
+  const scrollHint = document.getElementById('showcaseScrollHint');
+
+  const labels = [
+    { main: '🔌 Extension connects to your Chrome', sub: 'Lightweight, local, no cloud required' },
+    { main: '🤖 AI takes control — you watch', sub: 'Every action is queued for your review' },
+    { main: '✅ You approve every action', sub: 'Full transparency. Full control. Always.' },
+  ];
+
+  let currentStage = -1;
+
+  function setStage(idx) {
+    if (idx === currentStage) return;
+    currentStage = idx;
+    stages.forEach((s, i) => {
+      s.style.opacity = i === idx ? '1' : '0';
+      s.style.pointerEvents = i === idx ? 'auto' : 'none';
+    });
+    if (labels[idx]) {
+      labelText.style.opacity = '0';
+      labelText.style.transform = 'translateY(10px)';
+      setTimeout(() => {
+        labelText.textContent = labels[idx].main;
+        labelSub.textContent = labels[idx].sub;
+        labelText.style.opacity = '1';
+        labelText.style.transform = 'translateY(0)';
+      }, 150);
+    }
+  }
+
+  setStage(0);
+
+  function onScroll() {
+    if (!section) return;
+    const rect = section.getBoundingClientRect();
+    const scrollable = section.offsetHeight - window.innerHeight;
+    const progress = Math.max(0, Math.min(1, -rect.top / scrollable));
+
+    progressBar.style.height = (progress * 100) + '%';
+    scrollHint.style.opacity = progress > 0.02 ? '0' : '1';
+
+    const stageIdx = progress >= 0.67 ? 2 : progress >= 0.34 ? 1 : 0;
+    setStage(stageIdx);
+
+    const rotateY = progress * 360;
+    const rotateX = Math.sin(progress * Math.PI) * 18;
+    const scale = 1 + Math.sin(progress * Math.PI) * 0.05;
+
+    if (progress > 0.01) {
+      mockup.classList.add('scroll-driven');
+      mockup.style.transform = `perspective(1200px) rotateY(${rotateY}deg) rotateX(${rotateX}deg) scale(${scale})`;
+    } else {
+      mockup.classList.remove('scroll-driven');
+      mockup.style.transform = '';
+    }
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
 })();
 </script>
 
